@@ -3,15 +3,16 @@ require 'active_support/core_ext'
 require 'active_support/inflector'
 require 'erb'
 require_relative './session'
+require 'byebug'
 
 class ControllerBase
   attr_reader :req, :res, :params
 
   # Setup the controller
-  def initialize(req, res)
+  def initialize(req, res, params = {})
     @req = req
     @res = res
-    session
+    @params = params.merge(req.params)
   end
 
   # Helper method to alias @already_built_response
@@ -34,7 +35,6 @@ class ControllerBase
   def render_content(content, content_type)
     raise "error" if already_built_response?
     @res['Content-Type'] = content_type
-    # @res['Body'] = content
     @res.body = [content]
     @session.store_session(@res)
     @already_built_response = true
@@ -42,10 +42,9 @@ class ControllerBase
 
   # use ERB and binding to evaluate templates
   # pass the rendered html to render_content
-  def render(template_name)
+  def render(template_name) #template name is stuff like 'index', 'new', 'show', 'edit'
     path = "views/#{self.class.name.underscore}/#{template_name}.html.erb"
     file_content = File.read(path)
-    # content = ERB.new('<%=file_content%>').result(binding)
     content = ERB.new(file_content).result(binding)
     render_content(content, 'text/html')
   end
