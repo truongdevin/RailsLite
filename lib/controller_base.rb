@@ -13,6 +13,7 @@ class ControllerBase
     @req = req
     @res = res
     @params = params.merge(req.params)
+    @already_built_response = nil
   end
 
   # Helper method to alias @already_built_response
@@ -36,7 +37,7 @@ class ControllerBase
     raise "error" if already_built_response?
     @res['Content-Type'] = content_type
     @res.body = [content]
-    @session.store_session(@res)
+    session.store_session(@res)
     @already_built_response = true
   end
 
@@ -56,5 +57,7 @@ class ControllerBase
 
   # use this with the router to call action_name (:index, :show, :create...)
   def invoke_action(name)
+    send(name)
+    render(name) unless already_built_response?
   end
 end
